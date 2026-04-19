@@ -1,0 +1,17 @@
+{
+  "user": {
+    "age_corps": 47, "score_corp": 77, "poids_actuel": 85.1, "poids_cible": 74.6,
+    "imc": 26.3, "graisse_pct": 25.5, "eau_pct": 51.7, "muscles_squelettiques_pct": 46.3,
+    "os_pct": 3.9, "proteines_pct": 18.9, "muscles_pct": 70.6,
+    "capacite_reserve_musculaire": 2.0, "indice_graisse_viscerale": 11.0,
+    "graisse_sous_cutanee": 19.5, "masse_musculaire_maigre": 63.4,
+    "tmb": 1854, "tma": 2855, "somatotype": "Obésité",
+    "niveau_activite": "légèrement_actif", "duree_seance": 40,
+    "activites_preferees": ["marche","course","natation","velo","musculation","plongee"],
+    "objectifs": ["perte_graisse","gain_muscle","endurance"]
+  },
+  "objectifs_balance": {
+    "poids": 74.6, "controle_poids": -10.5, "controle_graisse": -10.5,
+    "controle_muscles": 0.0, "graisse_cible": 18.0, "igv_cible": 7
+  }
+}
