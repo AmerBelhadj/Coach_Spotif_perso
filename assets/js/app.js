@@ -13,6 +13,10 @@ const STATE = {
   reports: [],
   streak: [],
   badges: [],
+  water: 0,         // verres d'eau aujourd'hui
+  waterDate: '',    // date du dernier tracking eau
+  mood: null,       // humeur du jour
+  moodDate: '',
   currentActivity: null,
   currentIntensity: 'moderee',
   currentDuration: 20,
@@ -23,10 +27,24 @@ const STATE = {
   charts: {}
 };
 
+// ─── UTILS ───────────────────────────────────────────────────────────────────
+function sanitizeText(str) {
+  if (!str) return '';
+  return String(str)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/"/g,'&quot;').replace(/'/g,'&#x27;');
+}
+
 // ─── PERSISTENCE ─────────────────────────────────────────────────────────────
 function save() {
   try {
-    const toSave = { seances:STATE.seances, reports:STATE.reports, streak:STATE.streak, badges:STATE.badges, profile:STATE.profile };
+    const toSave = {
+      seances: STATE.seances, reports: STATE.reports,
+      streak: STATE.streak, badges: STATE.badges,
+      profile: STATE.profile,
+      water: STATE.water, waterDate: STATE.waterDate,
+      mood: STATE.mood, moodDate: STATE.moodDate
+    };
     localStorage.setItem('fitcoach_v1', JSON.stringify(toSave));
   } catch(e) {}
 }
@@ -36,6 +54,10 @@ function load() {
     if (d) {
       const parsed = JSON.parse(d);
       Object.assign(STATE, parsed);
+      // Reset water/mood if new day
+      const today = new Date().toDateString();
+      if (STATE.waterDate !== today) { STATE.water = 0; STATE.waterDate = today; }
+      if (STATE.moodDate !== today) { STATE.mood = null; STATE.moodDate = today; }
     }
   } catch(e) {}
 }
@@ -49,6 +71,8 @@ function goTo(page) {
   if (page === 'stats') setTimeout(initCharts, 100);
   if (page === 'home') updateHome();
   if (page === 'balance') renderReportsHistory();
+  if (page === 'suggestions') renderSuggestions();
+  if (page === 'settings') updateSettingsPage();
 }
 
 // ─── SPLASH ───────────────────────────────────────────────────────────────────
@@ -134,6 +158,162 @@ function updateHome() {
   document.getElementById('m-poids').textContent = STATE.profile.poids.toFixed(1) + ' kg';
   updateProgress();
   buildStreak();
+  updateDatePrevisionnelle();
+  updateKmTracker();
+}
+
+// ─── DATE PRÉVISIONNELLE ──────────────────────────────────────────────────────
+function updateDatePrevisionnelle() {
+  const p = STATE.profile;
+  const kgRestants = Math.max(0, p.poids - p.poids_cible);
+  if (kgRestants <= 0) {
+    document.getElementById('home-date-cible').textContent = '🎉 Objectif atteint !';
+    document.getElementById('home-countdown').textContent = '0';
+    document.getElementById('home-date-sub').textContent = 'Félicitations !';
+    return;
+  }
+  let kcalParSemaine;
+  if (STATE.seances.length >= 3) {
+    const totalKcal = STATE.seances.reduce((a,s) => a + (s.kcal||0), 0);
+    const premierDate = new Date(STATE.seances[0].date);
+    const semaines = Math.max(1, (Date.now() - premierDate) / (7*24*3600*1000));
+    kcalParSemaine = totalKcal / semaines;
+  } else {
+    kcalParSemaine = 3 * 300;
+  }
+  const kcalTotales = kgRestants * 7700;
+  const semainesRestantes = Math.ceil(kcalTotales / Math.max(1, kcalParSemaine));
+  const joursRestants = semainesRestantes * 7;
+  const dateObjectif = new Date();
+  dateObjectif.setDate(dateObjectif.getDate() + joursRestants);
+  const mois = ['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
+  const dateStr = `${dateObjectif.getDate()} ${mois[dateObjectif.getMonth()]} ${dateObjectif.getFullYear()}`;
+  document.getElementById('home-date-cible').textContent = dateStr;
+  document.getElementById('home-countdown').textContent = joursRestants;
+  const src = STATE.seances.length >= 3
+    ? `Basé sur ton historique : ~${Math.round(kcalParSemaine)} kcal/sem 📊`
+    : `Estimation : ~${Math.round(kcalParSemaine)} kcal/sem · affine avec tes séances`;
+  document.getElementById('home-date-sub').textContent = src;
+  const startPoids = 85.1;
+  const pct = Math.min(98, Math.max(2, ((startPoids - p.poids) / (startPoids - p.poids_cible)) * 100));
+  setTimeout(() => {
+    const fill = document.getElementById('timeline-fill');
+    if (fill) fill.style.width = pct + '%';
+    const lbl = document.getElementById('timeline-current-label');
+    if (lbl) lbl.textContent = p.poids.toFixed(1) + ' kg';
+  }, 400);
+}
+
+// ─── KM TRACKER ───────────────────────────────────────────────────────────────
+const VITESSE_KMH = {
+  marche: 5.5, course: 9.0, velo: 22.0,
+  natation: 1.8, musculation: 0, plongee: 1.2
+};
+const KM_OBJECTIF_SEMAINE = 30;
+
+function calcKmSeance(activite, dureeMin) {
+  const v = VITESSE_KMH[activite] || 0;
+  return Math.round((v * dureeMin / 60) * 10) / 10;
+}
+
+function updateKmTracker() {
+  let totalKm = 0;
+  const kmParAct = {};
+  STATE.seances.forEach(s => {
+    const km = s.km !== undefined ? s.km : calcKmSeance(s.activite, (s.duree||0)/60);
+    totalKm += km;
+    kmParAct[s.activite] = (kmParAct[s.activite] || 0) + km;
+  });
+  totalKm = Math.round(totalKm * 10) / 10;
+  const premierDate = STATE.seances.length > 0 ? new Date(STATE.seances[0].date) : new Date();
+  const semainesEcoulees = Math.max(1, (Date.now() - premierDate) / (7*24*3600*1000));
+  const kmObjectif = Math.round(semainesEcoulees * KM_OBJECTIF_SEMAINE * 10) / 10;
+  const pct = Math.min(100, Math.round((totalKm / Math.max(1, kmObjectif)) * 100));
+  document.getElementById('km-total').textContent = totalKm.toFixed(1);
+  document.getElementById('km-objectif').textContent = kmObjectif.toFixed(1);
+  document.getElementById('km-pct').textContent = pct + '%';
+  setTimeout(() => {
+    const bar = document.getElementById('prog-km');
+    if (bar) bar.style.width = Math.max(2, pct) + '%';
+  }, 500);
+  const icons = {marche:'🚶',course:'🏃',velo:'🚴',natation:'🏊',musculation:'🏋️',plongee:'🤿'};
+  const names = {marche:'Marche',course:'Course',velo:'Vélo',natation:'Nage',musculation:'Muscu',plongee:'Plongée'};
+  const breakdown = document.getElementById('km-breakdown');
+  if (!breakdown) return;
+  const acts = Object.entries(kmParAct).sort((a,b) => b[1]-a[1]).slice(0,3);
+  if (acts.length === 0) {
+    breakdown.innerHTML = `<div style="grid-column:1/-1;color:var(--text2);font-size:0.78rem;text-align:center;padding:8px">Lance ta première séance pour tracker tes km ! 🚀</div>`;
+    return;
+  }
+  breakdown.innerHTML = acts.map(([act, km]) => `
+    <div class="km-act">
+      <div class="km-act-icon">${icons[act]||'💪'}</div>
+      <div class="km-act-val">${km.toFixed(1)}</div>
+      <div class="km-act-label">${names[act]||act} km</div>
+    </div>`).join('');
+}
+
+// ─── SUGGESTIONS PERSONNALISÉES ───────────────────────────────────────────────
+function renderSuggestions() {
+  const p = STATE.profile;
+  const totalSeances = STATE.seances.length;
+  const el = document.getElementById('suggestions-list');
+  if (!el) return;
+  const kgRestants = Math.max(0, p.poids - p.poids_cible);
+  const suggestions = [];
+  if (p.igv >= 10) suggestions.push({
+    prio:'high', icon:'🏃', title:'Priorité #1 : Réduire la graisse viscérale',
+    body:`IGV à ${p.igv} (cible : 7). La marche rapide 30 min/jour est l'arme #1 prouvée contre la graisse viscérale. Combine avec natation 2×/sem pour un résultat express.`
+  });
+  if (p.muscles < 72) suggestions.push({
+    prio:'high', icon:'🏋️', title:'Musculation 2× par semaine obligatoire',
+    body:`Muscles à ${p.muscles}% (bas). Squats, rowing, pompes, fentes : 2 séances/sem suffisent. Plus de muscle = ton métabolisme brûle +200 kcal/jour en plus, même au repos !`
+  });
+  if (p.graisse > 22) suggestions.push({
+    prio:'high', icon:'🏊', title:'Natation : l\'activité reine pour ton profil',
+    body:`${p.graisse}% de graisse → la natation brûle 420 kcal/séance, sollicite 80% des muscles et préserve les articulations. 2× par semaine = résultats visibles en 6 semaines.`
+  });
+  if (p.eau < 55) suggestions.push({
+    prio:'med', icon:'💧', title:'Hydratation insuffisante',
+    body:`Eau corporelle à ${p.eau}% (cible >55%). 2.5-3L d'eau/jour accélère le métabolisme de 3% et aide ton foie à brûler les graisses. Commence chaque matin avec 500ml.`
+  });
+  if (p.proteines < 20) suggestions.push({
+    prio:'med', icon:'🥩', title:'Augmente ton apport en protéines',
+    body:`${p.proteines}% de protéines — légèrement bas. Vise 1.6g/kg/jour (~136g pour toi). Œufs, poulet, thon, légumineuses. Les protéines préservent le muscle lors de la perte de poids.`
+  });
+  suggestions.push({
+    prio:'med', icon:'🤿', title:'Plongée : le secret anti-graisse viscérale',
+    body:`La plongée combine cardio (palmes), gainage profond (équilibre) et travail des épaules. ~380 kcal/h + impact mental très positif (méditation active). Idéal pour briser la routine.`
+  });
+  if (totalSeances < 5) suggestions.push({
+    prio:'med', icon:'📅', title:'Planifie tes séances comme des RDV',
+    body:`La régularité bat l'intensité. Bloque 3 créneaux fixes/semaine. Exemple : lundi marche rapide, mercredi musculation, samedi natation. L'habitude se forme en 21 jours.`
+  });
+  suggestions.push({
+    prio:'low', icon:'😴', title:'Sommeil = brûleur de graisse naturel',
+    body:`7-9h de sommeil régule la leptine (satiété) et réduit le cortisol qui stocke la graisse viscérale. Sport + sommeil de qualité = combo qui multiplie les résultats par 2.`
+  });
+  suggestions.push({
+    prio:'low', icon:'🧘', title:'Récupération active entre les séances',
+    body:`20 min de marche légère ou étirements entre les séances intenses maintient le métabolisme élevé et réduit le risque de blessure. Ne reste pas totalement inactif les jours de repos.`
+  });
+  if (kgRestants > 0) suggestions.push({
+    prio:'low', icon:'🍽️', title:'Déficit calorique intelligent',
+    body:`TMB excellent à ${p.tmb} kcal. Vise −300 à −500 kcal/jour via alimentation (pas de régime drastique !). Réduis sucres rapides et alcool. Ton corps fera le reste avec le sport.`
+  });
+  el.innerHTML = `
+    <div class="coach-bubble" style="margin-bottom:20px">
+      <p class="coach-msg">${suggestions.length} recommandations basées sur ton rapport de balance + ${totalSeances} séance${totalSeances>1?'s':''} enregistrée${totalSeances>1?'s':''}. Du plus urgent au plus complémentaire 👇</p>
+    </div>
+    ${suggestions.map((s,i) => `
+    <div class="suggestion-card prio-${s.prio}" style="animation:fadeIn 0.3s ease ${i*0.06}s both">
+      <div class="sug-header">
+        <span class="sug-icon">${s.icon}</span>
+        <span class="sug-title">${s.title}</span>
+        <span class="sug-prio ${s.prio}">${s.prio==='high'?'🔴 Urgent':s.prio==='med'?'🟡 Important':'🟢 Bonus'}</span>
+      </div>
+      <div class="sug-body">${s.body}</div>
+    </div>`).join('')}`;
 }
 
 // ─── ACTIVITY SELECTION ───────────────────────────────────────────────────────
@@ -142,18 +322,21 @@ function selectActivity(act) {
   document.querySelectorAll('.act-card').forEach(c => c.classList.remove('selected'));
   document.getElementById('act-' + act).classList.add('selected');
   checkCanGenerate();
+  updateObjectifCounter();
 }
 
 function selectIntensity(lvl) {
   STATE.currentIntensity = lvl;
   document.querySelectorAll('.int-btn').forEach(b => b.classList.remove('selected'));
   document.getElementById('int-' + lvl).classList.add('selected');
+  updateObjectifCounter();
 }
 
 function selectDuration(mins, el) {
   STATE.currentDuration = mins;
   document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
   el.classList.add('active');
+  updateObjectifCounter();
 }
 
 function checkCanGenerate() {
@@ -162,6 +345,82 @@ function checkCanGenerate() {
     btn.disabled = false;
     btn.style.opacity = '1';
   }
+}
+
+// ─── OBJECTIF COUNTER ─────────────────────────────────────────────────────────
+// Kcal brûlées par séance selon activité (base 40 min, modérée)
+const KCAL_BASE = {
+  marche: 220, course: 380, velo: 310,
+  natation: 420, musculation: 290, plongee: 380
+};
+
+// Fréquence supposée par semaine (moyenne adaptable)
+const FREQ_PAR_SEMAINE = 3; // à 3 séances/sem par défaut
+
+function calcKcalSeance(act, dur, int) {
+  const base = KCAL_BASE[act] || 300;
+  const durFactor = dur / 40; // normalisé sur 40 min
+  const intFactor = { douce: 0.68, moderee: 1.0, intense: 1.42 }[int] || 1.0;
+  return Math.round(base * durFactor * intFactor);
+}
+
+function updateObjectifCounter() {
+  const act = STATE.currentActivity;
+  if (!act) return;
+
+  const counter = document.getElementById('objectif-counter');
+  counter.style.display = 'block';
+
+  const dur = STATE.currentDuration;
+  const int = STATE.currentIntensity;
+  const p = STATE.profile;
+
+  // Calories déjà brûlées via séances terminées
+  const kcalDone = STATE.seances.reduce((a, s) => a + (s.kcal || 0), 0);
+
+  // 1 kg de graisse ≈ 7700 kcal
+  const kgAPerdr = Math.max(0, p.poids - p.poids_cible);
+  const kcalTotales = Math.round(kgAPerdr * 7700);
+  const kcalRestantes = Math.max(0, kcalTotales - kcalDone);
+
+  const kcalParSeance = calcKcalSeance(act, dur, int);
+  const nbSeances = Math.ceil(kcalRestantes / kcalParSeance);
+  const nbSemaines = Math.ceil(nbSeances / FREQ_PAR_SEMAINE);
+
+  // Date estimée
+  const dateEstimee = new Date();
+  dateEstimee.setDate(dateEstimee.getDate() + nbSemaines * 7);
+  const mois = ['jan','fév','mar','avr','mai','juin','juil','août','sep','oct','nov','déc'];
+  const dateStr = `${dateEstimee.getDate()} ${mois[dateEstimee.getMonth()]} ${dateEstimee.getFullYear()}`;
+
+  // Vitesse (max = natation intense 90min = ~900 kcal/séance)
+  const speedPct = Math.min(100, Math.round((kcalParSeance / 900) * 100));
+  const speedLabel = speedPct < 30 ? '🐢 Lente mais sûre' : speedPct < 60 ? '🚶 Régulière' : speedPct < 80 ? '🏃 Rapide' : '🔥 Express';
+
+  // Animate number
+  const el = document.getElementById('obj-nb-seances');
+  el.classList.add('updating');
+  setTimeout(() => el.classList.remove('updating'), 400);
+
+  el.textContent = nbSeances;
+  document.getElementById('obj-date-cible').textContent = dateStr;
+  document.getElementById('obj-kcal-seance').textContent = kcalParSeance;
+  document.getElementById('obj-kcal-total').textContent = Math.round(kcalRestantes / 1000) + 'k';
+  document.getElementById('obj-semaines').textContent = nbSemaines + ' sem';
+  document.getElementById('obj-speed-fill').style.width = speedPct + '%';
+  document.getElementById('obj-speed-label-val').textContent = speedLabel;
+
+  // Emoji progress (10 emojis représentant les séances accomplies / total)
+  const emojiRow = document.getElementById('obj-emoji-row');
+  const totalDone = STATE.seances.length;
+  const totalNeeded = nbSeances + totalDone;
+  const slots = Math.min(10, totalNeeded);
+  const donePct = Math.round((totalDone / Math.max(1, totalNeeded)) * slots);
+  const actEmojis = { marche:'🚶', course:'🏃', velo:'🚴', natation:'🏊', musculation:'🏋️', plongee:'🤿' };
+  const em = actEmojis[act] || '💪';
+  emojiRow.innerHTML = Array.from({length: slots}, (_, i) =>
+    `<span class="obj-emoji ${i < donePct ? 'active' : 'inactive'}">${i < donePct ? '✅' : em}</span>`
+  ).join('');
 }
 
 // ─── EXERCISE DATABASE ────────────────────────────────────────────────────────
@@ -388,11 +647,16 @@ function finishSeance() {
   const totalCount = STATE.exercicesDone.length;
   const kcal = Math.round(STATE._currentSeanceKcal * (doneCount / totalCount));
 
+  const dureeMin = STATE.timerSeconds > 0 ? STATE.timerSeconds / 60 : STATE.currentDuration;
+  const km = calcKmSeance(STATE.currentActivity, dureeMin);
+
   const seance = {
     date: new Date().toISOString(),
     activite: STATE.currentActivity,
     duree: STATE.timerSeconds,
+    dureeMin,
     kcal,
+    km,
     intensity: STATE.currentIntensity,
     doneCount, totalCount,
     icon: {marche:'🚶',course:'🏃',velo:'🚴',natation:'🏊',musculation:'🏋️',plongee:'🤿'}[STATE.currentActivity]
@@ -407,7 +671,8 @@ function finishSeance() {
   checkBadges();
   save();
   confetti();
-  showToast(`🎉 Séance terminée ! ${kcal} kcal brûlées !`);
+  const kmStr = km > 0 ? ` · ${km.toFixed(1)} km` : '';
+  showToast(`🎉 Séance terminée ! ${kcal} kcal brûlées${kmStr} !`);
   cancelSeance();
   updateHome();
 }
@@ -559,7 +824,7 @@ function displayAnalyse(data, file) {
       ${data.points_ameliorer.map(p=>`<div style="font-size:0.82rem;color:var(--fire);padding:4px 0">• ${p}</div>`).join('')}
     </div>` : ''}
     <div class="coach-bubble" style="margin-top:14px;margin-bottom:0">
-      <p class="coach-msg">${data.conseil_coach || 'Continue comme ça !'}</p>
+      <p class="coach-msg">${sanitizeText(data.conseil_coach) || 'Continue comme ça !'}</p>
     </div>
   </div>`;
 
@@ -712,6 +977,209 @@ if (uz) {
     const file = e.dataTransfer.files[0];
     if (file) { const dt = new DataTransfer(); dt.items.add(file); document.getElementById('file-input').files = dt.files; analyzeReport({target:{files:[file]}}); }
   });
+}
+
+// ─── SETTINGS PAGE ───────────────────────────────────────────────────────────
+function updateSettingsPage() {
+  const p = STATE.profile;
+  const el = document.getElementById('settings-profile-summary');
+  if (el) el.textContent = `${p.poids.toFixed(1)} kg · Objectif ${p.poids_cible} kg\nScore corporel : ${p.score_corp}/100`;
+  const elObj = document.getElementById('settings-objectif-sub');
+  if (elObj) elObj.textContent = `Cible actuelle : ${p.poids_cible} kg`;
+  buildWaterTracker();
+  buildMoodRow();
+}
+
+// ─── MODAL SYSTEM ────────────────────────────────────────────────────────────
+function openModal(id) {
+  // Pre-fill mesures modal
+  if (id === 'modal-mesures') {
+    const p = STATE.profile;
+    ['poids','imc','graisse','muscles','eau','igv','proteines','tmb','masse','score'].forEach(k => {
+      const map = {poids:'poids',imc:'imc',graisse:'graisse',muscles:'muscles',
+        eau:'eau',igv:'igv',proteines:'proteines',tmb:'tmb',masse:'masse_maigre',score:'score_corp'};
+      const el = document.getElementById('inp-' + k);
+      if (el && p[map[k]] !== undefined) el.value = p[map[k]];
+    });
+  }
+  if (id === 'modal-objectif') {
+    const el1 = document.getElementById('inp-poids-cible');
+    const el2 = document.getElementById('inp-graisse-cible');
+    if (el1) el1.value = STATE.profile.poids_cible;
+    if (el2) el2.value = STATE.profile.graisse_cible;
+  }
+  const modal = document.getElementById(id);
+  if (modal) modal.classList.add('open');
+}
+function closeModal(id) {
+  const modal = document.getElementById(id);
+  if (modal) modal.classList.remove('open');
+}
+function closeModalIfOutside(e, id) {
+  if (e.target.id === id) closeModal(id);
+}
+
+// ─── SAVE MESURES ────────────────────────────────────────────────────────────
+function saveMesures() {
+  const p = STATE.profile;
+  const fields = [
+    ['inp-poids','poids'],['inp-imc','imc'],['inp-graisse','graisse'],
+    ['inp-muscles','muscles'],['inp-eau','eau'],['inp-igv','igv'],
+    ['inp-proteines','proteines'],['inp-tmb','tmb'],
+    ['inp-masse','masse_maigre'],['inp-score','score_corp']
+  ];
+  let changed = 0;
+  fields.forEach(([id, key]) => {
+    const el = document.getElementById(id);
+    if (el && el.value !== '') {
+      const val = parseFloat(el.value);
+      if (!isNaN(val)) { p[key] = val; changed++; }
+    }
+  });
+  if (changed > 0) {
+    save();
+    updateHome();
+    updateSettingsPage();
+    closeModal('modal-mesures');
+    showToast(`✅ ${changed} mesure${changed>1?'s':''} mise${changed>1?'s':''} à jour !`);
+  } else {
+    showToast('⚠️ Aucune valeur saisie');
+  }
+}
+
+// ─── SAVE OBJECTIF ───────────────────────────────────────────────────────────
+function saveObjectif() {
+  const el1 = document.getElementById('inp-poids-cible');
+  const el2 = document.getElementById('inp-graisse-cible');
+  if (el1 && el1.value) STATE.profile.poids_cible = parseFloat(el1.value);
+  if (el2 && el2.value) STATE.profile.graisse_cible = parseFloat(el2.value);
+  save();
+  updateHome();
+  updateSettingsPage();
+  closeModal('modal-objectif');
+  showToast('🎯 Objectif mis à jour !');
+}
+
+// ─── RESET MESURES (garde séances/badges) ────────────────────────────────────
+function resetMesures() {
+  STATE.profile = {
+    poids: 0, poids_cible: 74.6,
+    graisse: 0, graisse_cible: 18.0,
+    igv: 0, igv_cible: 7,
+    tmb: 0, muscles: 0,
+    eau: 0, proteines: 0,
+    imc: 0, masse_maigre: 0,
+    score_corp: 0
+  };
+  STATE.reports = [];
+  save();
+  updateHome();
+  updateSettingsPage();
+  closeModal('modal-reset-mesures');
+  showToast('🔄 Mesures réinitialisées ! Importe ton rapport de balance 📸');
+  setTimeout(() => goTo('balance'), 1500);
+}
+
+// ─── RESET ALL ───────────────────────────────────────────────────────────────
+function resetAll() {
+  localStorage.removeItem('fitcoach_v1');
+  STATE.profile = {
+    poids: 85.1, poids_cible: 74.6, graisse: 25.5, graisse_cible: 18.0,
+    igv: 11, igv_cible: 7, tmb: 1854, muscles: 70.6,
+    eau: 51.7, proteines: 18.9, imc: 26.3, masse_maigre: 63.4, score_corp: 77
+  };
+  STATE.seances = []; STATE.reports = []; STATE.streak = []; STATE.badges = [];
+  STATE.water = 0; STATE.mood = null;
+  closeModal('modal-reset-all');
+  showToast('🗑️ Toutes les données effacées');
+  updateHome();
+  updateSettingsPage();
+}
+
+// ─── EXPORT DATA ─────────────────────────────────────────────────────────────
+function exportData() {
+  const data = {
+    exportDate: new Date().toISOString(),
+    version: '2.1',
+    profile: STATE.profile,
+    seances: STATE.seances,
+    reports: STATE.reports.map(r => ({ date: r.date, data: r.data })), // pas d'images base64
+    streak: STATE.streak,
+    badges: STATE.badges
+  };
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `fitcoach-data-${new Date().toISOString().slice(0,10)}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('📤 Données exportées !');
+}
+
+// ─── IMPORT DATA ─────────────────────────────────────────────────────────────
+function importData(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const parsed = JSON.parse(e.target.result);
+      if (parsed.profile) STATE.profile = { ...STATE.profile, ...parsed.profile };
+      if (parsed.seances) STATE.seances = parsed.seances;
+      if (parsed.reports) STATE.reports = parsed.reports;
+      if (parsed.streak) STATE.streak = parsed.streak;
+      if (parsed.badges) STATE.badges = parsed.badges;
+      save();
+      updateHome();
+      updateSettingsPage();
+      showToast('📥 Données importées avec succès !');
+    } catch(err) {
+      showToast('⚠️ Fichier invalide');
+    }
+  };
+  reader.readAsText(file);
+  event.target.value = '';
+}
+
+// ─── WATER TRACKER ───────────────────────────────────────────────────────────
+const WATER_TOTAL = 8;
+function buildWaterTracker() {
+  const el = document.getElementById('water-tracker');
+  const count = document.getElementById('water-count');
+  if (!el) return;
+  el.innerHTML = '';
+  for (let i = 0; i < WATER_TOTAL; i++) {
+    const glass = document.createElement('div');
+    glass.className = 'water-glass' + (i < STATE.water ? ' filled' : '');
+    glass.innerHTML = '<div class="water-fill"></div>';
+    glass.onclick = () => toggleWater(i);
+    el.appendChild(glass);
+  }
+  if (count) count.textContent = `${STATE.water} / ${WATER_TOTAL} verres`;
+}
+function toggleWater(idx) {
+  STATE.water = idx < STATE.water ? idx : idx + 1;
+  STATE.waterDate = new Date().toDateString();
+  save();
+  buildWaterTracker();
+  if (STATE.water >= WATER_TOTAL) showToast('💧 Objectif hydratation atteint ! 🎉');
+}
+
+// ─── MOOD ────────────────────────────────────────────────────────────────────
+function buildMoodRow() {
+  const row = document.getElementById('mood-row');
+  if (!row) return;
+  row.querySelectorAll('.mood-btn').forEach(btn => {
+    btn.classList.toggle('selected', btn.dataset.mood === STATE.mood);
+  });
+}
+function setMood(emoji, ref) {
+  STATE.mood = STATE.mood === emoji ? null : emoji;
+  STATE.moodDate = new Date().toDateString();
+  save();
+  buildMoodRow();
+  if (STATE.mood) showToast(`Humeur du jour : ${STATE.mood}`);
 }
 
 // ─── SERVICE WORKER ───────────────────────────────────────────────────────────
