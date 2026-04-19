@@ -354,6 +354,292 @@
       position:fixed; inset:0; pointer-events:none; z-index:500; overflow:hidden;
     }
 
+    /* OBJECTIF COUNTER */
+    .objectif-counter {
+      background: linear-gradient(135deg, rgba(255,107,53,0.12), rgba(255,179,71,0.08));
+      border: 1.5px solid rgba(255,107,53,0.35);
+      border-radius: var(--r);
+      padding: 16px;
+      margin: 14px 0;
+      animation: fadeIn 0.4s ease;
+      position: relative;
+      overflow: hidden;
+    }
+    .objectif-counter::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(90deg, transparent, rgba(255,107,53,0.04), transparent);
+      animation: shimmer 3s infinite;
+    }
+    .obj-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    .obj-left { flex: 1; }
+    .obj-label { font-size: 0.7rem; color: var(--text2); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 4px; }
+    .obj-seances {
+      font-family: 'Syne', sans-serif; font-size: 2.8rem; font-weight: 800;
+      line-height: 1;
+      background: linear-gradient(135deg, var(--fire), var(--fire2));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+      transition: all 0.4s ease;
+    }
+    .obj-seances.updating {
+      transform: scale(1.15);
+    }
+    .obj-unit { font-size: 0.82rem; color: var(--text2); margin-top: 2px; }
+    .obj-right { text-align: right; }
+    .obj-date {
+      font-family: 'Syne', sans-serif; font-size: 1rem; font-weight: 700;
+      color: var(--neon);
+    }
+    .obj-date-label { font-size: 0.68rem; color: var(--text2); margin-top: 2px; }
+    .obj-divider { height: 1px; background: rgba(255,107,53,0.2); margin: 12px 0; }
+    .obj-breakdown {
+      display: grid; grid-template-columns: 1fr 1fr 1fr;
+      gap: 8px; text-align: center;
+    }
+    .obj-stat { }
+    .obj-stat-val {
+      font-family: 'Syne', sans-serif; font-size: 1rem; font-weight: 700;
+      color: var(--text);
+    }
+    .obj-stat-label { font-size: 0.62rem; color: var(--text2); margin-top: 1px; }
+    .obj-speed-bar {
+      margin-top: 12px;
+    }
+    .obj-speed-label {
+      display: flex; justify-content: space-between;
+      font-size: 0.7rem; color: var(--text2); margin-bottom: 5px;
+    }
+    .obj-speed-track {
+      height: 6px; background: var(--card2); border-radius: 20px; overflow: hidden; position: relative;
+    }
+    .obj-speed-fill {
+      height: 100%; border-radius: 20px;
+      background: linear-gradient(90deg, var(--fire), var(--fire2));
+      transition: width 0.5s ease;
+    }
+    .obj-emoji-row {
+      display: flex; gap: 4px; margin-top: 10px; flex-wrap: wrap;
+    }
+    .obj-emoji { font-size: 1.1rem; transition: all 0.3s; }
+    .obj-emoji.active { filter: none; }
+    .obj-emoji.inactive { filter: grayscale(1); opacity: 0.3; }
+
+    /* DATE PREVISIONNELLE */
+    .date-prev-card {
+      background: linear-gradient(135deg, rgba(0,217,245,0.1), rgba(0,245,160,0.06));
+      border: 1.5px solid rgba(0,217,245,0.25);
+      border-radius: var(--r); padding: 16px; margin-bottom: 16px;
+    }
+    .date-prev-row { display:flex; align-items:center; justify-content:space-between; }
+    .date-prev-left {}
+    .date-prev-label { font-size:0.68rem; color:var(--text2); letter-spacing:1.5px; text-transform:uppercase; margin-bottom:6px; }
+    .date-prev-main {
+      font-family:'Syne',sans-serif; font-size:1.4rem; font-weight:800;
+      background:linear-gradient(135deg,var(--neon2),var(--neon));
+      -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+    }
+    .date-prev-sub { font-size:0.75rem; color:var(--text2); margin-top:3px; }
+    .date-countdown {
+      text-align:center; background:rgba(0,217,245,0.1);
+      border-radius:12px; padding:10px 16px; border:1px solid rgba(0,217,245,0.2);
+    }
+    .countdown-num {
+      font-family:'Syne',sans-serif; font-size:1.8rem; font-weight:800; color:var(--neon2);
+      line-height:1;
+    }
+    .countdown-unit { font-size:0.62rem; color:var(--text2); letter-spacing:1px; }
+    .poids-timeline {
+      margin-top:14px;
+    }
+    .timeline-bar {
+      position:relative; height:32px; background:var(--card2);
+      border-radius:20px; overflow:hidden;
+    }
+    .timeline-fill {
+      height:100%; border-radius:20px;
+      background:linear-gradient(90deg,var(--neon),var(--neon2));
+      transition:width 1s ease; position:relative; overflow:hidden;
+    }
+    .timeline-fill::after {
+      content:''; position:absolute; inset:0;
+      background:linear-gradient(90deg,transparent,rgba(255,255,255,0.25),transparent);
+      animation:shimmer 2.5s infinite;
+    }
+    .timeline-marker {
+      position:absolute; top:50%; transform:translateY(-50%);
+      font-family:'Syne',sans-serif; font-size:0.72rem; font-weight:700;
+      white-space:nowrap; pointer-events:none;
+    }
+    .timeline-labels {
+      display:flex; justify-content:space-between;
+      margin-top:5px; font-size:0.68rem; color:var(--text2);
+    }
+
+    /* KM TRACKER */
+    .km-card {
+      background:var(--card); border:1px solid var(--border); border-radius:var(--r); padding:18px;
+      margin-bottom:16px;
+    }
+    .km-header { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:14px; }
+    .km-total {
+      font-family:'Syne',sans-serif; font-size:2.4rem; font-weight:800;
+      line-height:1; color:var(--text);
+    }
+    .km-total span { font-size:1rem; color:var(--text2); font-weight:400; }
+    .km-objective-badge {
+      background:rgba(0,245,160,0.1); color:var(--neon);
+      border:1px solid rgba(0,245,160,0.2); border-radius:10px;
+      padding:6px 12px; font-size:0.72rem; font-weight:600; text-align:center;
+    }
+    .km-pct {
+      font-family:'Syne',sans-serif; font-size:1.4rem; font-weight:800; color:var(--neon); display:block;
+    }
+    .km-breakdown { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-top:12px; }
+    .km-act {
+      background:var(--card2); border-radius:10px; padding:10px 8px; text-align:center;
+    }
+    .km-act-icon { font-size:1.3rem; }
+    .km-act-val { font-family:'Syne',sans-serif; font-size:0.95rem; font-weight:700; margin-top:3px; }
+    .km-act-label { font-size:0.6rem; color:var(--text2); margin-top:1px; }
+
+    /* SUGGESTIONS */
+    .suggestion-card {
+      background:var(--card); border-radius:var(--r); padding:16px;
+      margin-bottom:10px; border-left:3px solid var(--purple);
+      border-top:1px solid rgba(255,255,255,0.04);
+      border-right:1px solid rgba(255,255,255,0.04);
+      border-bottom:1px solid rgba(255,255,255,0.04);
+    }
+    .suggestion-card.prio-high { border-left-color: var(--fire); }
+    .suggestion-card.prio-med { border-left-color: var(--neon2); }
+    .suggestion-card.prio-low { border-left-color: var(--purple); }
+    .sug-header { display:flex; align-items:center; gap:10px; margin-bottom:6px; }
+    .sug-icon { font-size:1.3rem; }
+    .sug-title { font-family:'Syne',sans-serif; font-size:0.88rem; font-weight:700; }
+    .sug-prio {
+      margin-left:auto; font-size:0.6rem; padding:2px 8px; border-radius:10px; font-weight:600;
+    }
+    .sug-prio.high { background:rgba(255,107,53,0.15); color:var(--fire); }
+    .sug-prio.med { background:rgba(0,217,245,0.15); color:var(--neon2); }
+    .sug-prio.low { background:rgba(124,58,237,0.15); color:#a78bfa; }
+    .sug-body { font-size:0.8rem; color:var(--text2); line-height:1.6; }
+
+    /* ── SETTINGS PAGE ── */
+    .profile-hero {
+      background:linear-gradient(135deg,rgba(124,58,237,0.2),rgba(244,114,182,0.1));
+      border:1px solid rgba(124,58,237,0.3); border-radius:var(--r);
+      padding:20px; margin-bottom:20px; display:flex; align-items:center; gap:16px;
+    }
+    .profile-avatar-big {
+      width:64px; height:64px; border-radius:50%;
+      background:linear-gradient(135deg,var(--neon),var(--purple));
+      display:flex; align-items:center; justify-content:center;
+      font-size:2rem; flex-shrink:0; box-shadow:0 0 30px rgba(0,245,160,0.3);
+    }
+    .profile-info h2 { font-family:'Syne',sans-serif; font-size:1.2rem; font-weight:800; }
+    .profile-info p { color:var(--text2); font-size:0.8rem; margin-top:4px; line-height:1.5; }
+    .settings-row {
+      display:flex; align-items:center; justify-content:space-between;
+      padding:14px 0; border-bottom:1px solid rgba(255,255,255,0.04);
+    }
+    .settings-row:last-child { border:none; }
+    .settings-row-left { display:flex; align-items:center; gap:12px; }
+    .settings-icon {
+      width:36px; height:36px; border-radius:10px;
+      display:flex; align-items:center; justify-content:center; font-size:1.1rem; flex-shrink:0;
+    }
+    .si-green { background:rgba(0,245,160,0.12); }
+    .si-blue  { background:rgba(0,217,245,0.12); }
+    .si-orange{ background:rgba(255,107,53,0.12); }
+    .si-purple{ background:rgba(124,58,237,0.12); }
+    .si-red   { background:rgba(244,114,182,0.12); }
+    .si-gray  { background:rgba(136,136,187,0.12); }
+    .settings-row-title { font-size:0.88rem; font-weight:600; }
+    .settings-row-sub { font-size:0.72rem; color:var(--text2); margin-top:1px; }
+    .btn-settings-action {
+      padding:8px 14px; border-radius:10px; border:none; cursor:pointer;
+      font-family:'DM Sans',sans-serif; font-size:0.78rem; font-weight:600; transition:all 0.2s;
+    }
+    .btn-action-green  { background:rgba(0,245,160,0.12); color:var(--neon); }
+    .btn-action-blue   { background:rgba(0,217,245,0.12); color:var(--neon2); }
+    .btn-action-orange { background:rgba(255,107,53,0.12); color:var(--fire); }
+    .btn-action-red    { background:rgba(244,114,182,0.15); color:var(--pink); }
+
+    /* ── MODAL BOTTOM SHEET ── */
+    .modal-overlay {
+      position:fixed; inset:0; background:rgba(0,0,0,0.75);
+      backdrop-filter:blur(8px); z-index:200;
+      display:flex; align-items:flex-end; justify-content:center;
+      opacity:0; pointer-events:none; transition:opacity 0.3s;
+    }
+    .modal-overlay.open { opacity:1; pointer-events:all; }
+    .modal-sheet {
+      background:var(--card); border-radius:24px 24px 0 0;
+      width:100%; max-width:430px; padding:24px 20px 40px;
+      transform:translateY(100%); transition:transform 0.35s cubic-bezier(.4,0,.2,1);
+      max-height:90vh; overflow-y:auto;
+    }
+    .modal-overlay.open .modal-sheet { transform:translateY(0); }
+    .modal-handle {
+      width:40px; height:4px; background:var(--card2);
+      border-radius:10px; margin:0 auto 20px;
+    }
+    .modal-title { font-family:'Syne',sans-serif; font-size:1.2rem; font-weight:800; margin-bottom:4px; }
+    .modal-sub { color:var(--text2); font-size:0.8rem; margin-bottom:20px; }
+
+    /* ── FORM INPUTS ── */
+    .form-group { margin-bottom:14px; }
+    .form-label {
+      font-size:0.72rem; color:var(--text2); letter-spacing:1px;
+      text-transform:uppercase; margin-bottom:6px; display:block;
+    }
+    .form-row { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+    .form-input {
+      width:100%; background:var(--card2); border:1.5px solid var(--border);
+      border-radius:10px; padding:12px 14px; color:var(--text);
+      font-family:'DM Sans',sans-serif; font-size:0.95rem;
+      transition:border-color 0.2s; outline:none; -webkit-appearance:none;
+    }
+    .form-input:focus { border-color:var(--neon); }
+    .form-input::placeholder { color:var(--text2); }
+
+    /* ── WATER / MOOD ── */
+    .water-tracker { display:flex; gap:6px; flex-wrap:wrap; margin:10px 0; }
+    .water-glass {
+      width:36px; height:44px; border-radius:0 0 10px 10px;
+      border:2px solid rgba(0,217,245,0.3); cursor:pointer;
+      display:flex; align-items:flex-end; overflow:hidden; transition:all 0.2s;
+    }
+    .water-glass.filled { border-color:var(--neon2); }
+    .water-fill {
+      width:100%; background:linear-gradient(180deg,rgba(0,217,245,0.6),rgba(0,245,160,0.4));
+      border-radius:0 0 8px 8px; transition:height 0.3s ease;
+    }
+    .water-glass.filled .water-fill { height:100%; }
+    .water-glass:not(.filled) .water-fill { height:0%; }
+    .mood-row { display:flex; gap:8px; justify-content:center; margin:10px 0; }
+    .mood-btn {
+      width:48px; height:48px; border-radius:14px; background:var(--card2);
+      border:2px solid transparent; font-size:1.6rem; cursor:pointer;
+      transition:all 0.2s; display:flex; align-items:center; justify-content:center;
+    }
+    .mood-btn.selected { border-color:var(--neon); background:rgba(0,245,160,0.1); transform:scale(1.1); }
+
+    /* ── TOGGLE ── */
+    .toggle-switch {
+      width:44px; height:24px; border-radius:12px; background:var(--card2);
+      position:relative; cursor:pointer; transition:background 0.2s; flex-shrink:0;
+      border:1.5px solid rgba(255,255,255,0.08);
+    }
+    .toggle-switch.on { background:var(--neon); border-color:var(--neon); }
+    .toggle-knob {
+      width:18px; height:18px; border-radius:50%; background:white;
+      position:absolute; top:1px; left:1px;
+      transition:transform 0.2s; box-shadow:0 1px 4px rgba(0,0,0,0.4);
+    }
+    .toggle-switch.on .toggle-knob { transform:translateX(20px); }
+
     /* SCROLLBAR */
     ::-webkit-scrollbar { width:4px; }
     ::-webkit-scrollbar-track { background:transparent; }
@@ -472,8 +758,34 @@
     </div>
   </div>
 
+  <!-- Date prévisionnelle + countdown -->
+  <div class="date-prev-card" id="date-prev-card">
+    <div class="date-prev-row">
+      <div class="date-prev-left">
+        <div class="date-prev-label">📅 Objectif prévu le</div>
+        <div class="date-prev-main" id="home-date-cible">—</div>
+        <div class="date-prev-sub" id="home-date-sub">Basé sur tes séances récentes</div>
+      </div>
+      <div class="date-countdown">
+        <div class="countdown-num" id="home-countdown">—</div>
+        <div class="countdown-unit">JOURS</div>
+      </div>
+    </div>
+    <div class="poids-timeline" id="poids-timeline">
+      <div class="timeline-bar">
+        <div class="timeline-fill" id="timeline-fill" style="width:2%">
+          <span class="timeline-marker" style="right:8px;color:#07071a" id="timeline-current-label">85.1 kg</span>
+        </div>
+      </div>
+      <div class="timeline-labels">
+        <span>Départ 85.1 kg</span>
+        <span>🎯 Objectif 74.6 kg</span>
+      </div>
+    </div>
+  </div>
+
   <!-- Objectif progress -->
-  <div class="card" style="margin-top:16px">
+  <div class="card">
     <div class="card-title">PROGRESSION OBJECTIF</div>
     <div class="prog-wrap">
       <div class="prog-label"><span>Poids</span><span id="prog-poids-txt">85.1 / 74.6 kg</span></div>
@@ -487,6 +799,25 @@
       <div class="prog-label"><span>IGV</span><span>11 → 7</span></div>
       <div class="prog-bar"><div class="prog-fill" style="width:0%" id="prog-igv"></div></div>
     </div>
+  </div>
+
+  <!-- KM parcourus -->
+  <div class="km-card">
+    <div class="card-title">🗺️ KILOMÈTRES PARCOURUS</div>
+    <div class="km-header">
+      <div>
+        <div class="km-total"><span id="km-total">0.0</span> <span>km</span></div>
+        <div style="font-size:0.72rem;color:var(--text2);margin-top:3px">Objectif : <span id="km-objectif">—</span> km</div>
+      </div>
+      <div class="km-objective-badge">
+        <span class="km-pct" id="km-pct">0%</span>
+        objectif km
+      </div>
+    </div>
+    <div class="prog-bar" style="margin-bottom:10px">
+      <div class="prog-fill" id="prog-km" style="width:0%;background:linear-gradient(90deg,var(--neon2),var(--purple))"></div>
+    </div>
+    <div class="km-breakdown" id="km-breakdown"></div>
   </div>
 
   <!-- Streak -->
@@ -554,6 +885,46 @@
       <div class="chip" onclick="selectDuration(45,this)">45 min</div>
       <div class="chip" onclick="selectDuration(60,this)">60 min</div>
       <div class="chip" onclick="selectDuration(90,this)">90 min</div>
+    </div>
+
+    <!-- OBJECTIF ESTIMÉ — mis à jour en temps réel -->
+    <div class="objectif-counter" id="objectif-counter" style="display:none">
+      <div class="obj-row">
+        <div class="obj-left">
+          <div class="obj-label">🎯 Séances pour l'objectif</div>
+          <div class="obj-seances" id="obj-nb-seances">—</div>
+          <div class="obj-unit">séances de ce type</div>
+        </div>
+        <div class="obj-right">
+          <div class="obj-date" id="obj-date-cible">—</div>
+          <div class="obj-date-label">date estimée</div>
+        </div>
+      </div>
+      <div class="obj-divider"></div>
+      <div class="obj-breakdown">
+        <div class="obj-stat">
+          <div class="obj-stat-val" id="obj-kcal-seance">—</div>
+          <div class="obj-stat-label">kcal/séance</div>
+        </div>
+        <div class="obj-stat">
+          <div class="obj-stat-val" id="obj-kcal-total">—</div>
+          <div class="obj-stat-label">kcal restantes</div>
+        </div>
+        <div class="obj-stat">
+          <div class="obj-stat-val" id="obj-semaines">—</div>
+          <div class="obj-stat-label">semaines</div>
+        </div>
+      </div>
+      <div class="obj-speed-bar">
+        <div class="obj-speed-label">
+          <span>Vitesse de progression</span>
+          <span id="obj-speed-label-val">—</span>
+        </div>
+        <div class="obj-speed-track">
+          <div class="obj-speed-fill" id="obj-speed-fill" style="width:0%"></div>
+        </div>
+      </div>
+      <div class="obj-emoji-row" id="obj-emoji-row"></div>
     </div>
 
     <button class="btn-primary" onclick="generateSeance()" id="btn-gen-seance" disabled
@@ -688,6 +1059,268 @@
   </div>
 </div>
 
+<!-- PAGE: SUGGESTIONS -->
+<div id="page-suggestions" class="page">
+  <div class="header">
+    <div>
+      <div class="header-title">Coach 💡</div>
+      <div class="header-sub">Suggestions personnalisées</div>
+    </div>
+    <div style="font-size:1.5rem">🤖</div>
+  </div>
+  <div id="suggestions-list"></div>
+</div>
+
+<!-- PAGE: PARAMÈTRES -->
+<div id="page-settings" class="page">
+  <div class="header">
+    <div>
+      <div class="header-title">Profil ⚙️</div>
+      <div class="header-sub">Paramètres & réinitialisation</div>
+    </div>
+  </div>
+
+  <!-- Avatar profil -->
+  <div class="profile-hero">
+    <div class="profile-avatar-big">🏃</div>
+    <div class="profile-info">
+      <h2 id="settings-name-display">Mon Profil</h2>
+      <p id="settings-profile-summary">85.1 kg · Objectif 74.6 kg<br>Score corporel : 77/100</p>
+    </div>
+  </div>
+
+  <!-- Section: Mesures -->
+  <div class="card">
+    <div class="card-title">📏 MES MESURES</div>
+    <div class="settings-row">
+      <div class="settings-row-left">
+        <div class="settings-icon si-green">⚖️</div>
+        <div>
+          <div class="settings-row-title">Modifier mes mesures</div>
+          <div class="settings-row-sub">Saisir manuellement les données balance</div>
+        </div>
+      </div>
+      <button class="btn-settings-action btn-action-green" onclick="openModal('modal-mesures')">Modifier</button>
+    </div>
+    <div class="settings-row">
+      <div class="settings-row-left">
+        <div class="settings-icon si-blue">🎯</div>
+        <div>
+          <div class="settings-row-title">Modifier l'objectif poids</div>
+          <div class="settings-row-sub" id="settings-objectif-sub">Cible actuelle : 74.6 kg</div>
+        </div>
+      </div>
+      <button class="btn-settings-action btn-action-blue" onclick="openModal('modal-objectif')">Changer</button>
+    </div>
+    <div class="settings-row">
+      <div class="settings-row-left">
+        <div class="settings-icon si-orange">🔄</div>
+        <div>
+          <div class="settings-row-title">Réinitialiser les mesures</div>
+          <div class="settings-row-sub">Nouveau départ — garder l'historique séances</div>
+        </div>
+      </div>
+      <button class="btn-settings-action btn-action-orange" onclick="openModal('modal-reset-mesures')">Reset</button>
+    </div>
+  </div>
+
+  <!-- Section: Données -->
+  <div class="card">
+    <div class="card-title">🗂️ DONNÉES & HISTORIQUE</div>
+    <div class="settings-row">
+      <div class="settings-row-left">
+        <div class="settings-icon si-purple">📤</div>
+        <div>
+          <div class="settings-row-title">Exporter mes données</div>
+          <div class="settings-row-sub">Télécharger en JSON</div>
+        </div>
+      </div>
+      <button class="btn-settings-action btn-action-green" onclick="exportData()">Exporter</button>
+    </div>
+    <div class="settings-row">
+      <div class="settings-row-left">
+        <div class="settings-icon si-blue">📥</div>
+        <div>
+          <div class="settings-row-title">Importer des données</div>
+          <div class="settings-row-sub">Restaurer depuis un fichier JSON</div>
+        </div>
+      </div>
+      <button class="btn-settings-action btn-action-blue" onclick="document.getElementById('import-input').click()">Importer</button>
+    </div>
+    <input type="file" id="import-input" accept=".json" style="display:none" onchange="importData(event)">
+    <div class="settings-row">
+      <div class="settings-row-left">
+        <div class="settings-icon si-red">🗑️</div>
+        <div>
+          <div class="settings-row-title" style="color:var(--pink)">Tout effacer</div>
+          <div class="settings-row-sub">Supprimer toutes les données</div>
+        </div>
+      </div>
+      <button class="btn-settings-action btn-action-red" onclick="openModal('modal-reset-all')">Effacer</button>
+    </div>
+  </div>
+
+  <!-- Section: Quotidien -->
+  <div class="card">
+    <div class="card-title">💧 SUIVI QUOTIDIEN</div>
+    <div style="margin-bottom:8px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <span style="font-size:0.85rem">Eau consommée aujourd'hui</span>
+        <span style="font-family:'Syne',sans-serif;font-weight:700;color:var(--neon2)" id="water-count">0 / 8 verres</span>
+      </div>
+      <div class="water-tracker" id="water-tracker"></div>
+    </div>
+    <div style="margin-top:14px">
+      <div style="font-size:0.85rem;margin-bottom:8px">Humeur du jour</div>
+      <div class="mood-row" id="mood-row">
+        <div class="mood-btn" onclick="setMood('😴','this')" data-mood="😴">😴</div>
+        <div class="mood-btn" onclick="setMood('😕','this')" data-mood="😕">😕</div>
+        <div class="mood-btn" onclick="setMood('😐','this')" data-mood="😐">😐</div>
+        <div class="mood-btn" onclick="setMood('😊','this')" data-mood="😊">😊</div>
+        <div class="mood-btn" onclick="setMood('🔥','this')" data-mood="🔥">🔥</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section: À propos -->
+  <div class="card">
+    <div class="card-title">ℹ️ À PROPOS</div>
+    <div class="settings-row">
+      <div class="settings-row-left">
+        <div class="settings-icon si-gray">📱</div>
+        <div>
+          <div class="settings-row-title">FitCoach Pro</div>
+          <div class="settings-row-sub">Version 2.1 · PWA offline</div>
+        </div>
+      </div>
+      <span style="color:var(--text2);font-size:0.8rem">v2.1</span>
+    </div>
+    <div class="settings-row">
+      <div class="settings-row-left">
+        <div class="settings-icon si-purple">🤖</div>
+        <div>
+          <div class="settings-row-title">IA intégrée</div>
+          <div class="settings-row-sub">Analyse balance via Claude AI</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── MODALS ── -->
+
+<!-- Modal: Modifier mesures -->
+<div class="modal-overlay" id="modal-mesures" onclick="closeModalIfOutside(event,'modal-mesures')">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">⚖️ Modifier mes mesures</div>
+    <div class="modal-sub">Saisis tes données de balance manuellement</div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Poids (kg)</label>
+        <input class="form-input" type="number" id="inp-poids" step="0.1" placeholder="85.1">
+      </div>
+      <div class="form-group">
+        <label class="form-label">IMC</label>
+        <input class="form-input" type="number" id="inp-imc" step="0.1" placeholder="26.3">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Graisse corp. (%)</label>
+        <input class="form-input" type="number" id="inp-graisse" step="0.1" placeholder="25.5">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Muscles (%)</label>
+        <input class="form-input" type="number" id="inp-muscles" step="0.1" placeholder="70.6">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Eau corp. (%)</label>
+        <input class="form-input" type="number" id="inp-eau" step="0.1" placeholder="51.7">
+      </div>
+      <div class="form-group">
+        <label class="form-label">IGV</label>
+        <input class="form-input" type="number" id="inp-igv" step="0.1" placeholder="11.0">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Protéines (%)</label>
+        <input class="form-input" type="number" id="inp-proteines" step="0.1" placeholder="18.9">
+      </div>
+      <div class="form-group">
+        <label class="form-label">TMB (kcal)</label>
+        <input class="form-input" type="number" id="inp-tmb" step="1" placeholder="1854">
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Masse maigre (kg)</label>
+        <input class="form-input" type="number" id="inp-masse" step="0.1" placeholder="63.4">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Score corporel</label>
+        <input class="form-input" type="number" id="inp-score" step="1" placeholder="77">
+      </div>
+    </div>
+    <button class="btn-primary" onclick="saveMesures()" style="margin-top:6px">💾 SAUVEGARDER</button>
+    <button class="btn-secondary" onclick="closeModal('modal-mesures')" style="margin-top:10px">Annuler</button>
+  </div>
+</div>
+
+<!-- Modal: Objectif poids -->
+<div class="modal-overlay" id="modal-objectif" onclick="closeModalIfOutside(event,'modal-objectif')">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">🎯 Objectif poids</div>
+    <div class="modal-sub">Quel poids vises-tu ?</div>
+    <div class="form-group">
+      <label class="form-label">Poids cible (kg)</label>
+      <input class="form-input" type="number" id="inp-poids-cible" step="0.1" placeholder="74.6">
+    </div>
+    <div class="form-group">
+      <label class="form-label">% Graisse cible</label>
+      <input class="form-input" type="number" id="inp-graisse-cible" step="0.1" placeholder="18.0">
+    </div>
+    <button class="btn-primary" onclick="saveObjectif()" style="margin-top:6px">🎯 METTRE À JOUR</button>
+    <button class="btn-secondary" onclick="closeModal('modal-objectif')" style="margin-top:10px">Annuler</button>
+  </div>
+</div>
+
+<!-- Modal: Reset mesures -->
+<div class="modal-overlay" id="modal-reset-mesures" onclick="closeModalIfOutside(event,'modal-reset-mesures')">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">🔄 Réinitialiser les mesures</div>
+    <div class="modal-sub">Les données de balance seront remises à zéro. Ton historique de séances et badges sont conservés.</div>
+    <div style="background:rgba(255,107,53,0.08);border:1px solid rgba(255,107,53,0.2);border-radius:12px;padding:14px;margin-bottom:16px">
+      <p style="font-size:0.82rem;color:var(--fire);line-height:1.6">⚠️ Ceci est idéal si tu passes l'app à un nouvel utilisateur ou si tu veux repartir avec de nouvelles mesures de base.</p>
+    </div>
+    <div style="display:flex;gap:10px">
+      <button class="btn-secondary" onclick="closeModal('modal-reset-mesures')" style="flex:1">Annuler</button>
+      <button class="btn-primary" onclick="resetMesures()" style="flex:1;background:linear-gradient(135deg,var(--fire),var(--fire2));color:#1a0800">🔄 Réinitialiser</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Reset tout -->
+<div class="modal-overlay" id="modal-reset-all" onclick="closeModalIfOutside(event,'modal-reset-all')">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title" style="color:var(--pink)">🗑️ Tout effacer</div>
+    <div class="modal-sub">Cette action est irréversible.</div>
+    <div style="background:rgba(244,114,182,0.08);border:1px solid rgba(244,114,182,0.2);border-radius:12px;padding:14px;margin-bottom:16px">
+      <p style="font-size:0.82rem;color:var(--pink);line-height:1.6">⚠️ Toutes les données seront supprimées : mesures, séances, rapports de balance, badges et historique.</p>
+    </div>
+    <div style="display:flex;gap:10px">
+      <button class="btn-secondary" onclick="closeModal('modal-reset-all')" style="flex:1">Annuler</button>
+      <button class="btn-primary" onclick="resetAll()" style="flex:1;background:linear-gradient(135deg,var(--pink),#c026d3);color:white">🗑️ Tout effacer</button>
+    </div>
+  </div>
+</div>
+
 <!-- NAV -->
 <nav id="nav">
   <button class="nav-btn active" onclick="goTo('home')" id="nav-home">
@@ -701,6 +1334,12 @@
   </button>
   <button class="nav-btn" onclick="goTo('stats')" id="nav-stats">
     <span class="icon">📈</span><span>Stats</span>
+  </button>
+  <button class="nav-btn" onclick="goTo('suggestions')" id="nav-suggestions">
+    <span class="icon">💡</span><span>Coach</span>
+  </button>
+  <button class="nav-btn" onclick="goTo('settings')" id="nav-settings">
+    <span class="icon">⚙️</span><span>Profil</span>
   </button>
 </nav>
 
